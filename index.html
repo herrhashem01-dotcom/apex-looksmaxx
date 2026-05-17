@@ -1,37 +1,1723 @@
-export default async function handler(req, res) {
-  // Allow CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APEX — Neural Facial Analysis System</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+:root{
+  --void:#050505;
+  --obsidian:#0f0f0f;
+  --panel:#141414;
+  --panel2:#1a1a1a;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.12);
+  --border3:rgba(255,255,255,0.2);
+  --white:#ffffff;
+  --off-white:#e8e8e8;
+  --muted:rgba(255,255,255,0.35);
+  --muted2:rgba(255,255,255,0.55);
+  --emerald:#3ddc84;
+  --emerald-dim:rgba(61,220,132,0.12);
+  --amber:#f0a045;
+  --amber-dim:rgba(240,160,69,0.12);
+  --red:#e05555;
+  --red-dim:rgba(224,85,85,0.12);
+  --glass:rgba(255,255,255,0.03);
+  --glass2:rgba(255,255,255,0.06);
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--void);
+  color:var(--white);
+  font-family:'Inter',sans-serif;
+  font-weight:400;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--void)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── HEADER ── */
+header{
+  position:fixed;top:0;left:0;right:0;
+  z-index:900;
+  height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+  border-bottom:1px solid var(--border);
+  background:rgba(5,5,5,0.85);
+  backdrop-filter:blur(20px);
+}
+
+.header-left{display:flex;align-items:center;gap:16px}
+
+.logo-id{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:2px;
+  color:var(--muted);
+}
+
+.logo-name{
+  font-family:'Outfit',sans-serif;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-0.5px;
+  color:var(--white);
+}
+
+.status-indicator{
+  display:flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  color:var(--emerald);
+}
+
+.status-dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--emerald);
+  box-shadow:0 0 6px var(--emerald);
+  animation:pulse 2s ease infinite;
+}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+nav{display:flex;gap:1px}
+
+nav button{
+  background:none;border:none;
+  color:var(--muted);
+  font-family:'Inter',sans-serif;
+  font-size:12px;font-weight:500;
+  letter-spacing:0.5px;
+  padding:6px 16px;
+  border-radius:3px;
+  cursor:pointer;transition:all 0.15s;
+  text-transform:uppercase;
+}
+
+nav button.active{color:var(--white);background:var(--glass2)}
+nav button:hover:not(.active){color:var(--muted2)}
+
+/* ── PROGRESS BAR (top) ── */
+.top-progress{
+  position:fixed;top:60px;left:0;right:0;
+  z-index:800;
+  height:2px;
+  background:var(--border);
+  display:none;
+}
+
+.top-progress-fill{
+  height:100%;
+  background:var(--white);
+  width:0;
+  transition:width 0.4s ease;
+  box-shadow:0 0 8px rgba(255,255,255,0.5);
+}
+
+/* ── MAIN ── */
+main{
+  padding-top:80px;
+  max-width:860px;
+  margin:0 auto;
+  padding-left:2rem;
+  padding-right:2rem;
+  padding-bottom:6rem;
+}
+
+.section{display:none}
+.section.active{display:block}
+
+/* ── HERO ── */
+.hero{padding:4rem 0 3rem;position:relative}
+
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--muted);
+  text-transform:uppercase;
+  border:1px solid var(--border2);
+  padding:5px 12px;border-radius:2px;
+  margin-bottom:2rem;
+}
+
+.hero-tag span{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--white);
+  box-shadow:0 0 8px white;
+}
+
+.hero h1{
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(44px,7vw,80px);
+  font-weight:800;
+  letter-spacing:-2px;
+  line-height:0.95;
+  margin-bottom:1.5rem;
+}
+
+.hero h1 .gradient-text{
+  background:linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.3) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.hero-sub{
+  font-size:15px;
+  color:var(--muted);
+  line-height:1.8;
+  max-width:520px;
+  font-weight:400;
+}
+
+.hero-metrics{
+  display:flex;gap:2rem;margin-top:2.5rem;
+  padding-top:2rem;
+  border-top:1px solid var(--border);
+}
+
+.hero-metric-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:20px;font-weight:700;
+  color:var(--white);margin-bottom:2px;
+}
+
+.hero-metric-label{
+  font-size:11px;letter-spacing:1px;
+  color:var(--muted);text-transform:uppercase;
+}
+
+/* ── UPLOAD ── */
+.upload-zone{
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:4rem 2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.25s;
+  background:var(--glass);
+  position:relative;
+  overflow:hidden;
+}
+
+.upload-zone:hover{border-color:var(--border3);background:var(--glass2)}
+
+/* scanner line on hover */
+.upload-zone::after{
+  content:'';
+  position:absolute;
+  left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);
+  box-shadow:0 0 15px rgba(255,255,255,0.4);
+  top:-2px;
+  animation:scan 3s ease-in-out infinite;
+  opacity:0;
+  transition:opacity 0.3s;
+}
+
+.upload-zone:hover::after{opacity:1}
+
+@keyframes scan{
+  0%{top:-2px}
+  50%{top:calc(100% + 2px)}
+  100%{top:-2px}
+}
+
+.upload-cross{
+  width:56px;height:56px;
+  border:1px solid var(--border2);
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1.5rem;
+  font-size:22px;
+  position:relative;z-index:1;
+}
+
+.upload-title{
+  font-family:'Outfit',sans-serif;
+  font-size:16px;font-weight:600;
+  letter-spacing:0.5px;
+  margin-bottom:0.5rem;
+  position:relative;z-index:1;
+}
+
+.upload-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+  line-height:1.8;letter-spacing:0.5px;
+  position:relative;z-index:1;
+}
+
+/* SUBJECT LOCKED STATE */
+.subject-locked{
+  position:relative;
+  border-radius:4px;
+  overflow:hidden;
+  border:1px solid var(--border2);
+  margin-bottom:1rem;
+}
+
+.subject-img{
+  width:100%;max-height:340px;
+  object-fit:cover;
+  display:block;
+  filter:grayscale(100%) contrast(1.05);
+}
+
+.scanner-active{
+  position:absolute;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent);
+  box-shadow:0 0 15px rgba(255,255,255,0.6),0 0 30px rgba(255,255,255,0.2);
+  animation:scan-active 2s linear infinite;
+  top:0;
+}
+
+@keyframes scan-active{
+  0%{top:0%}100%{top:100%}
+}
+
+.subject-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(5,5,5,0.7) 0%,transparent 40%);
+}
+
+.subject-locked-tag{
+  position:absolute;top:12px;left:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;
+  color:var(--emerald);
+  background:rgba(5,5,5,0.8);
+  border:1px solid rgba(61,220,132,0.3);
+  padding:4px 10px;border-radius:2px;
+}
+
+.corner{
+  position:absolute;
+  width:14px;height:14px;
+  border-color:rgba(255,255,255,0.5);
+  border-style:solid;
+}
+
+.corner-tl{top:8px;left:8px;border-width:1px 0 0 1px}
+.corner-tr{top:8px;right:8px;border-width:1px 1px 0 0}
+.corner-bl{bottom:8px;left:8px;border-width:0 0 1px 1px}
+.corner-br{bottom:8px;right:8px;border-width:0 1px 1px 0}
+
+/* ── BUTTONS ── */
+.btn-primary{
+  width:100%;padding:14px 24px;
+  border:none;border-radius:3px;
+  background:var(--white);
+  color:#000;
+  font-family:'Outfit',sans-serif;
+  font-size:14px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;
+}
+
+.btn-primary:hover{background:var(--off-white);transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,255,255,0.1)}
+.btn-primary:disabled{opacity:0.2;cursor:default;transform:none;box-shadow:none}
+
+.btn-ghost{
+  background:none;
+  border:1px solid var(--border2);
+  color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:1px;
+  padding:7px 14px;border-radius:2px;
+  cursor:pointer;transition:all 0.2s;
+  display:inline-flex;align-items:center;gap:6px;
+  margin-bottom:1.5rem;
+  text-transform:uppercase;
+}
+
+.btn-ghost:hover{color:var(--white);border-color:var(--border3)}
+
+/* ── LOADING ── */
+.loading-box{padding:5rem 2rem;text-align:center}
+
+.neural-spinner{
+  width:48px;height:48px;
+  border:1px solid var(--border2);
+  border-top:1px solid var(--white);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 2rem;
+  position:relative;
+}
+
+.neural-spinner::after{
+  content:'';
+  position:absolute;inset:4px;
+  border:1px solid var(--border);
+  border-bottom:1px solid rgba(255,255,255,0.3);
+  border-radius:50%;
+  animation:spin 1.5s linear infinite reverse;
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.load-protocol{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:0.5rem;
+}
+
+.load-step{
+  font-family:'Outfit',sans-serif;
+  font-size:16px;font-weight:500;
+  margin-bottom:1.5rem;
+}
+
+.load-track{
+  height:1px;background:var(--border);
+  max-width:240px;margin:0 auto;overflow:hidden;
+}
+
+.load-fill{
+  height:100%;background:var(--white);
+  box-shadow:0 0 6px rgba(255,255,255,0.6);
+  width:0;animation:fill 5s ease forwards;
+}
+
+@keyframes fill{to{width:100%}}
+
+/* ── BENTO GRID RESULTS ── */
+.bento-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:auto;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.bento{
+  background:var(--obsidian);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1.25rem;
+  transition:border-color 0.2s;
+}
+
+.bento:hover{border-color:var(--border2)}
+
+.bento-span2{grid-column:span 2}
+.bento-span3{grid-column:span 3}
+
+.bento-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:0.75rem;
+}
+
+.bento-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:32px;font-weight:700;
+  line-height:1;
+  color:var(--white);
+}
+
+.bento-unit{
+  font-size:13px;font-weight:400;
+  color:var(--muted);
+  margin-left:2px;
+}
+
+.bento-tier{
+  font-family:'Outfit',sans-serif;
+  font-size:22px;font-weight:700;
+  letter-spacing:-0.5px;
+  margin-bottom:0.4rem;
+}
+
+.bento-desc{
+  font-size:12px;color:var(--muted);
+  line-height:1.7;
+}
+
+.status-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:1px;
+  padding:4px 10px;border-radius:2px;
+  text-transform:uppercase;margin-bottom:0.75rem;
+}
+
+.chip-optimal{color:var(--emerald);background:var(--emerald-dim);border:1px solid rgba(61,220,132,0.2)}
+.chip-required{color:var(--amber);background:var(--amber-dim);border:1px solid rgba(240,160,69,0.2)}
+.chip-critical{color:var(--red);background:var(--red-dim);border:1px solid rgba(224,85,85,0.2)}
+
+/* ── RADAR CHART ── */
+.radar-wrap{
+  display:flex;align-items:center;justify-content:center;
+  padding:0.5rem 0;
+}
+
+/* ── SCORE BARS ── */
+.metric-row{
+  display:flex;align-items:center;gap:12px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.metric-row:last-child{border:none}
+
+.metric-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:1px;
+  color:var(--muted);text-transform:uppercase;
+  width:90px;flex-shrink:0;
+}
+
+.metric-track{
+  flex:1;height:1px;
+  background:var(--border);
+  border-radius:1px;
+  overflow:visible;
+  position:relative;
+}
+
+.metric-fill{
+  position:absolute;top:-1px;left:0;
+  height:3px;border-radius:1px;
+  background:var(--white);
+  transition:width 1s ease;
+}
+
+.metric-fill.good{background:var(--emerald)}
+.metric-fill.mid{background:var(--amber)}
+.metric-fill.bad{background:var(--red)}
+
+.metric-score{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:700;
+  width:32px;text-align:right;flex-shrink:0;
+}
+
+/* ── PLAN ── */
+.plan-item{
+  background:var(--obsidian);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1.25rem 1.5rem;
+  margin-bottom:8px;
+  transition:all 0.2s;
+}
+
+.plan-item:hover{border-color:var(--border2)}
+
+.plan-row{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:10px;
+}
+
+.plan-index{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:1px;width:32px;flex-shrink:0;
+}
+
+.plan-name{
+  font-family:'Outfit',sans-serif;
+  font-size:15px;font-weight:600;flex:1;
+}
+
+.plan-advice{
+  font-size:13px;color:var(--muted);
+  line-height:1.75;
+  padding-left:44px;
+}
+
+.section-head{
+  display:flex;align-items:center;gap:12px;
+  margin:2rem 0 1rem;
+}
+
+.section-head-line{
+  flex:1;height:1px;background:var(--border);
+}
+
+.section-head-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+  flex-shrink:0;
+}
+
+/* HAIRCUTS */
+.haircut-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.haircut-card{
+  background:var(--obsidian);
+  border:1px solid var(--border);
+  border-radius:4px;padding:1.1rem;
+  transition:border-color 0.2s;
+}
+
+.haircut-card:hover{border-color:var(--border2)}
+
+.haircut-id{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+.haircut-name{
+  font-family:'Outfit',sans-serif;
+  font-size:14px;font-weight:600;
+  margin-bottom:6px;
+}
+
+.haircut-desc{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ADVICE */
+.advice-row{
+  display:flex;gap:1rem;
+  padding:1rem 0;
+  border-bottom:1px solid var(--border);
+}
+
+.advice-row:last-child{border:none}
+
+.advice-id{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:1px;flex-shrink:0;
+  padding-top:2px;
+}
+
+.advice-body{font-size:13px;color:var(--muted);line-height:1.75}
+
+/* ── DAILY ── */
+.bento-xp{
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+.xp-level{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:2px;
+  color:var(--muted);
+}
+
+.xp-bar-track{
+  height:2px;background:var(--border);
+  border-radius:1px;margin-top:8px;overflow:hidden;
+}
+
+.xp-bar-fill{
+  height:100%;background:var(--white);
+  box-shadow:0 0 6px rgba(255,255,255,0.4);
+  border-radius:1px;transition:width 0.5s ease;
+}
+
+.daily-task{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:1rem 0;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;transition:opacity 0.15s;
+}
+
+.daily-task:last-child{border:none}
+.daily-task:hover{opacity:0.75}
+
+.task-box{
+  width:20px;height:20px;
+  border:1px solid var(--border2);
+  border-radius:2px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:2px;transition:all 0.2s;
+  font-size:10px;
+}
+
+.task-box.done{
+  background:var(--white);border-color:var(--white);
+  color:#000;
+}
+
+.task-title{
+  font-family:'Outfit',sans-serif;
+  font-size:14px;font-weight:500;
+  margin-bottom:2px;transition:opacity 0.2s;
+}
+
+.task-title.done{opacity:0.3;text-decoration:line-through}
+
+.task-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:0.5px;
+}
+
+.protocol-id{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:1px;
+  color:var(--muted);
+}
+
+/* ── SETTINGS ── */
+.settings-block{
+  background:var(--obsidian);
+  border:1px solid var(--border);
+  border-radius:4px;padding:1.5rem;
+  margin-bottom:8px;
+}
+
+.settings-block-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:1.25rem;
+  padding-bottom:0.75rem;
+  border-bottom:1px solid var(--border);
+}
+
+.api-input{
+  width:100%;padding:11px 14px;
+  background:rgba(5,5,5,0.8);
+  border:1px solid var(--border2);border-radius:3px;
+  color:var(--white);
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  outline:none;margin-bottom:10px;transition:border-color 0.2s;
+}
+
+.api-input:focus{border-color:var(--border3)}
+.api-input::placeholder{color:var(--muted)}
+
+.api-note{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+  line-height:1.7;letter-spacing:0.3px;
+  margin-bottom:1rem;
+}
+
+.api-note a{color:var(--off-white);text-decoration:none;border-bottom:1px solid var(--border3)}
+.api-note a:hover{color:var(--white)}
+
+.key-status{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:1px;
+  margin-top:8px;
+}
+
+.notif-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+
+.notif-row:last-child{border:none}
+
+.notif-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.notif-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.5px}
+
+.toggle{
+  width:40px;height:22px;border-radius:11px;
+  background:var(--border);cursor:pointer;
+  position:relative;transition:background 0.2s;flex-shrink:0;
+}
+
+.toggle.on{background:var(--white)}
+.toggle::after{
+  content:'';width:16px;height:16px;
+  background:var(--obsidian);border-radius:50%;
+  position:absolute;top:3px;left:3px;
+  transition:left 0.2s,background 0.2s;
+}
+
+.toggle.on::after{left:21px;background:var(--void)}
+
+/* LOCKED */
+.locked-state{
+  text-align:center;padding:5rem 2rem;
+}
+
+.locked-frame{
+  width:72px;height:72px;
+  border:1px solid var(--border2);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto 1.5rem;
+  position:relative;
+}
+
+.locked-frame::before,.locked-frame::after{
+  content:'';position:absolute;
+  width:8px;height:8px;
+  border-color:var(--border3);border-style:solid;
+}
+
+.locked-frame::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.locked-frame::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+
+.locked-title{
+  font-family:'Outfit',sans-serif;
+  font-size:28px;font-weight:700;letter-spacing:-0.5px;
+  margin-bottom:0.75rem;
+}
+
+.locked-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+  line-height:1.8;letter-spacing:0.5px;
+  margin-bottom:2rem;
+}
+
+/* ── TRANSFORM SECTION ── */
+.transform-section{
+  padding:5rem 0;
+  position:relative;
+  overflow:hidden;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  margin:2rem 0;
+}
+
+.transform-inner{
+  display:flex;
+  align-items:center;
+  gap:5rem;
+}
+
+.transform-left{flex:1}
+
+.transform-heading{
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(36px,5vw,60px);
+  font-weight:800;
+  letter-spacing:-2px;
+  line-height:1.05;
+  margin-bottom:2.5rem;
+}
+
+.transform-heading .gradient-text{
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.3) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.transform-features{display:flex;flex-direction:column;gap:1.25rem}
+
+.transform-feature{
+  display:flex;align-items:center;gap:14px;
+}
+
+.feature-bullet{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+.feature-bullet svg{width:12px;height:12px;color:#000;fill:currentColor}
+
+.feature-label{
+  font-size:14px;font-weight:500;
+  color:rgba(255,255,255,0.7);
+  letter-spacing:0.2px;
+}
+
+.transform-right{
+  flex:1;
+  position:relative;
+}
+
+.neural-card-wrap{
+  aspect-ratio:4/5;
+  background:rgba(255,255,255,0.04);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:8px;
+  transform:rotate(2deg);
+  transition:transform 0.7s cubic-bezier(0.23,1,0.32,1);
+  position:relative;
+  z-index:1;
+}
+
+.neural-card-wrap:hover{transform:rotate(0deg)}
+
+.neural-card-inner{
+  width:100%;height:100%;
+  background:#171717;
+  border-radius:12px;
+  overflow:hidden;
+  position:relative;
+}
+
+.neural-card-gradient{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,#000 0%,transparent 55%);
+  z-index:1;
+}
+
+.neural-card-noise{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  z-index:0;
+  opacity:0.5;
+}
+
+/* Animated grid lines in card background */
+.neural-card-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+
+.neural-card-bottom{
+  position:absolute;
+  bottom:1.5rem;left:1.5rem;right:1.5rem;
+  z-index:2;
+}
+
+.neural-card-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  opacity:0.5;margin-bottom:6px;
+}
+
+.neural-card-row{
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+.neural-card-phase{
+  font-family:'Outfit',sans-serif;
+  font-size:20px;font-weight:700;
+  letter-spacing:-0.5px;
+}
+
+.neural-card-score{
+  font-family:'JetBrains Mono',monospace;
+  font-size:32px;font-weight:700;
+  color:var(--white);
+}
+
+.neural-card-scanner{
+  position:absolute;
+  left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent);
+  box-shadow:0 0 15px rgba(255,255,255,0.9),0 0 30px rgba(255,255,255,0.3);
+  z-index:3;
+  animation:card-scan 3s linear infinite;
+  top:0;
+}
+
+@keyframes card-scan{
+  0%{top:0%}100%{top:100%}
+}
+
+/* corner brackets on card */
+.nc-corner{position:absolute;width:12px;height:12px;border-color:rgba(255,255,255,0.25);border-style:solid;z-index:4}
+.nc-tl{top:6px;left:6px;border-width:1px 0 0 1px}
+.nc-tr{top:6px;right:6px;border-width:1px 1px 0 0}
+.nc-bl{bottom:6px;left:6px;border-width:0 0 1px 1px}
+.nc-br{bottom:6px;right:6px;border-width:0 1px 1px 0}
+
+/* Status bars on card */
+.nc-bars{
+  display:flex;flex-direction:column;gap:6px;
+  margin-top:12px;
+}
+
+.nc-bar-row{display:flex;align-items:center;gap:8px}
+.nc-bar-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:8px;letter-spacing:1px;
+  color:rgba(255,255,255,0.4);
+  width:36px;flex-shrink:0;
+}
+
+.nc-bar-track{
+  flex:1;height:2px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;
+}
+
+.nc-bar-fill{
+  height:100%;background:rgba(255,255,255,0.35);border-radius:1px;
+}
+
+.glow-orb{
+  position:absolute;
+  bottom:-2.5rem;right:-2.5rem;
+  width:16rem;height:16rem;
+  background:rgba(255,255,255,0.04);
+  border-radius:50%;
+  filter:blur(60px);
+  pointer-events:none;
+}
+
+.glow-orb-2{
+  position:absolute;
+  top:-3rem;left:-3rem;
+  width:10rem;height:10rem;
+  background:rgba(255,255,255,0.02);
+  border-radius:50%;
+  filter:blur(40px);
+  pointer-events:none;
+}
+
+@media(max-width:680px){
+  .transform-inner{flex-direction:column;gap:3rem}
+  .transform-right{width:100%}
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.f1{animation:fadeUp 0.5s ease both}
+.f2{animation:fadeUp 0.5s 0.07s ease both}
+.f3{animation:fadeUp 0.5s 0.14s ease both}
+
+@media(max-width:560px){
+  header{padding:0 1.25rem}
+  main{padding-left:1.25rem;padding-right:1.25rem}
+  .bento-grid{grid-template-columns:1fr 1fr}
+  .bento-span2{grid-column:span 2}
+  .bento-span3{grid-column:span 2}
+  .haircut-grid{grid-template-columns:1fr}
+  nav button{font-size:11px;padding:6px 10px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-name">APEX</div>
+    <div class="logo-id">SYS-v1.0</div>
+  </div>
+  <div class="status-indicator">
+    <div class="status-dot"></div>
+    NEURAL ONLINE
+  </div>
+  <nav>
+    <button class="active" onclick="switchTab('analyze')">Scan</button>
+    <button onclick="switchTab('plan')">Protocol</button>
+    <button onclick="switchTab('daily')">Sync</button>
+    <button onclick="switchTab('settings')">Config</button>
+  </nav>
+</header>
+
+<div class="top-progress" id="topProgress">
+  <div class="top-progress-fill" id="topFill"></div>
+</div>
+
+<main>
+
+  <!-- ─── ANALYZE ─── -->
+  <div class="section active" id="tab-analyze">
+
+    <div class="hero f1">
+      <div class="hero-tag"><span></span> Neural Facial Analysis System</div>
+      <h1>
+        <span class="gradient-text">Architectural</span><br>
+        <span class="gradient-text">Analysis.</span>
+      </h1>
+      <p class="hero-sub">Upload a subject photo. The system performs landmark detection, structure mapping, and generates a full optimization protocol in seconds.</p>
+      <div class="hero-metrics">
+        <div>
+          <div class="hero-metric-val">6</div>
+          <div class="hero-metric-label">Vectors Mapped</div>
+        </div>
+        <div>
+          <div class="hero-metric-val">&lt;10s</div>
+          <div class="hero-metric-label">Analysis Time</div>
+        </div>
+        <div>
+          <div class="hero-metric-val">100%</div>
+          <div class="hero-metric-label">Private</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRANSFORM SECTION ── -->
+    <div class="transform-section f2">
+      <div class="transform-inner">
+        <div class="transform-left">
+          <h2 class="transform-heading">
+            <span class="gradient-text">Transform</span><br>
+            <span class="gradient-text">Without</span><br>
+            <span class="gradient-text">Illusion.</span>
+          </h2>
+          <div class="transform-features">
+            <div class="transform-feature">
+              <div class="feature-bullet"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.51 6.51 0 0 0 8 1.5zm3.28 4.47-3.75 5a.75.75 0 0 1-1.06.1l-2-1.75a.75.75 0 0 1 1-1.14l1.4 1.22 3.22-4.28a.75.75 0 0 1 1.19.91v-.06z"/></svg></div>
+              <span class="feature-label">Symmetry &amp; Alignment Checks</span>
+            </div>
+            <div class="transform-feature">
+              <div class="feature-bullet"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.51 6.51 0 0 0 8 1.5zm3.28 4.47-3.75 5a.75.75 0 0 1-1.06.1l-2-1.75a.75.75 0 0 1 1-1.14l1.4 1.22 3.22-4.28a.75.75 0 0 1 1.19.91v-.06z"/></svg></div>
+              <span class="feature-label">Jawline Definition Optimization</span>
+            </div>
+            <div class="transform-feature">
+              <div class="feature-bullet"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.51 6.51 0 0 0 8 1.5zm3.28 4.47-3.75 5a.75.75 0 0 1-1.06.1l-2-1.75a.75.75 0 0 1 1-1.14l1.4 1.22 3.22-4.28a.75.75 0 0 1 1.19.91v-.06z"/></svg></div>
+              <span class="feature-label">Skin Quality Progression</span>
+            </div>
+            <div class="transform-feature">
+              <div class="feature-bullet"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.51 6.51 0 0 0 8 1.5zm3.28 4.47-3.75 5a.75.75 0 0 1-1.06.1l-2-1.75a.75.75 0 0 1 1-1.14l1.4 1.22 3.22-4.28a.75.75 0 0 1 1.19.91v-.06z"/></svg></div>
+              <span class="feature-label">Hunter Eyes &amp; Bone Structure Analysis</span>
+            </div>
+            <div class="transform-feature">
+              <div class="feature-bullet"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.51 6.51 0 0 0 8 1.5zm3.28 4.47-3.75 5a.75.75 0 0 1-1.06.1l-2-1.75a.75.75 0 0 1 1-1.14l1.4 1.22 3.22-4.28a.75.75 0 0 1 1.19.91v-.06z"/></svg></div>
+              <span class="feature-label">Personalized Haircut Protocol</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="transform-right">
+          <div class="neural-card-wrap">
+            <div class="neural-card-inner">
+              <div class="neural-card-noise"></div>
+              <div class="neural-card-grid"></div>
+              <div class="neural-card-gradient"></div>
+              <div class="nc-corner nc-tl"></div>
+              <div class="nc-corner nc-tr"></div>
+              <div class="nc-corner nc-bl"></div>
+              <div class="nc-corner nc-br"></div>
+              <div class="neural-card-scanner"></div>
+              <div class="neural-card-bottom">
+                <div class="neural-card-eyebrow">Current Analysis</div>
+                <div class="neural-card-row">
+                  <span class="neural-card-phase">ALPHA-7 PHASE</span>
+                  <span class="neural-card-score">88.4</span>
+                </div>
+                <div class="nc-bars">
+                  <div class="nc-bar-row"><div class="nc-bar-label">JAWL</div><div class="nc-bar-track"><div class="nc-bar-fill" style="width:88%"></div></div></div>
+                  <div class="nc-bar-row"><div class="nc-bar-label">EYES</div><div class="nc-bar-track"><div class="nc-bar-fill" style="width:76%"></div></div></div>
+                  <div class="nc-bar-row"><div class="nc-bar-label">SYMM</div><div class="nc-bar-track"><div class="nc-bar-fill" style="width:92%"></div></div></div>
+                  <div class="nc-bar-row"><div class="nc-bar-label">SKIN</div><div class="nc-bar-track"><div class="nc-bar-fill" style="width:60%"></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="glow-orb"></div>
+          <div class="glow-orb-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload state -->
+    <div id="upload-state" class="f2">
+      <div class="upload-zone" onclick="document.getElementById('fileInput').click()" id="dropzone">
+        <div class="upload-cross">+</div>
+        <div class="upload-title">Initialize Subject Scan</div>
+        <p class="upload-sub">
+          FRONT-FACING · NEUTRAL EXPRESSION · HIGH RESOLUTION<br>
+          SUBJECT DATA IS NOT STORED OR TRANSMITTED
+        </p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+
+      <div id="preview-wrap" style="display:none;margin-top:12px">
+        <div class="subject-locked">
+          <img id="previewImg" class="subject-img"/>
+          <div class="scanner-active" id="scannerLine" style="display:none"></div>
+          <div class="subject-overlay"></div>
+          <div class="subject-locked-tag">SUBJECT LOCKED</div>
+          <div class="corner corner-tl"></div>
+          <div class="corner corner-tr"></div>
+          <div class="corner corner-bl"></div>
+          <div class="corner corner-br"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn-primary" id="analyzeBtn" disabled onclick="startAnalysis()">
+          INITIALIZE NEURAL SCAN →
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-state" style="display:none">
+      <div class="loading-box">
+        <div class="neural-spinner"></div>
+        <div class="load-protocol" id="loadProtocol">PHASE 1 / 5 — INITIALIZATION</div>
+        <div class="load-step" id="loadingText">Detecting facial landmarks...</div>
+        <div class="load-track"><div class="load-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-state" style="display:none">
+      <button class="btn-ghost" onclick="resetAnalysis()">← RESET SCAN</button>
+
+      <!-- BENTO GRID -->
+      <div class="bento-grid f1">
+        <!-- Overall score -->
+        <div class="bento">
+          <div class="bento-label">Overall Score</div>
+          <div class="bento-val" id="bentoScore">—<span class="bento-unit">/10</span></div>
+        </div>
+        <!-- Tier + desc -->
+        <div class="bento bento-span2">
+          <div class="bento-label">Classification</div>
+          <div class="bento-tier" id="bentoTier">—</div>
+          <div class="bento-desc" id="bentoDesc">—</div>
+        </div>
+        <!-- Radar -->
+        <div class="bento bento-span2">
+          <div class="bento-label">Vector Distribution</div>
+          <div class="radar-wrap">
+            <canvas id="radarCanvas" width="220" height="200"></canvas>
+          </div>
+        </div>
+        <!-- Metrics -->
+        <div class="bento">
+          <div class="bento-label">Metrics</div>
+          <div id="metricList"></div>
+        </div>
+        <!-- Status -->
+        <div class="bento bento-span3">
+          <div class="bento-label">System Recommendation</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.75" id="systemRec">—</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn-primary" onclick="switchTab('plan')">VIEW UPGRADE PROTOCOL →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── PLAN ─── -->
+  <div class="section" id="tab-plan">
+    <div class="locked-state" id="plan-locked">
+      <div class="locked-frame">🔒</div>
+      <div class="locked-title">No Subject Loaded</div>
+      <p class="locked-sub">RUN A NEURAL SCAN FIRST<br>TO UNLOCK YOUR UPGRADE PROTOCOL</p>
+      <button class="btn-primary" onclick="switchTab('analyze')" style="max-width:260px;margin:0 auto;display:block">INITIALIZE SCAN →</button>
+    </div>
+
+    <div id="plan-content" style="display:none">
+      <div class="hero f1" style="padding-top:2.5rem;padding-bottom:1.5rem">
+        <div class="hero-tag"><span></span> Personalized Upgrade Protocol</div>
+        <h1 style="font-size:clamp(36px,5vw,54px)"><span class="gradient-text">Optimization<br>Protocol.</span></h1>
+      </div>
+
+      <div class="section-head">
+        <div class="section-head-label">Priority Actions</div>
+        <div class="section-head-line"></div>
+      </div>
+      <div id="planItems"></div>
+
+      <div class="section-head">
+        <div class="section-head-label">Recommended Cuts</div>
+        <div class="section-head-line"></div>
+      </div>
+      <div class="haircut-grid" id="haircutItems"></div>
+
+      <div class="section-head">
+        <div class="section-head-label">Expert Log</div>
+        <div class="section-head-line"></div>
+      </div>
+      <div id="adviceItems"></div>
+    </div>
+  </div>
+
+  <!-- ─── DAILY ─── -->
+  <div class="section" id="tab-daily">
+    <div class="hero f1" style="padding-top:2.5rem;padding-bottom:1.5rem">
+      <div class="hero-tag"><span></span> Daily Sync System</div>
+      <h1 style="font-size:clamp(36px,5vw,54px)"><span class="gradient-text">Mission<br>Log.</span></h1>
+    </div>
+
+    <!-- Bento Stats -->
+    <div class="bento-grid f2">
+      <div class="bento">
+        <div class="bento-label">Active Streak</div>
+        <div class="bento-val" id="streakVal">0</div>
+        <div class="bento-label" style="margin-top:4px;margin-bottom:0">DAYS</div>
+      </div>
+      <div class="bento bento-span2">
+        <div class="bento-label">XP Progress</div>
+        <div class="bento-xp">
+          <div class="xp-level" id="xpLevel">LEVEL 01</div>
+          <div class="xp-level" id="xpCount">340 / 500 XP</div>
+        </div>
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" id="xpFill" style="width:68%"></div>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="bento-label" style="margin-bottom:0.5rem">This Week</div>
+          <div style="display:flex;gap:6px" id="weekDots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head f3">
+      <div class="section-head-label">Today's Protocol</div>
+      <div class="section-head-line"></div>
+    </div>
+    <div id="dailyList" class="f3"></div>
+
+    <div style="margin-top:1.5rem">
+      <button class="btn-primary" onclick="syncAll()">SYNC ALL TASKS +50 XP</button>
+    </div>
+  </div>
+
+  <!-- ─── SETTINGS ─── -->
+  <div class="section" id="tab-settings">
+    <div class="hero f1" style="padding-top:2.5rem;padding-bottom:1.5rem">
+      <div class="hero-tag"><span></span> System Configuration</div>
+      <h1 style="font-size:clamp(36px,5vw,54px)"><span class="gradient-text">Config.</span></h1>
+    </div>
+
+    <div class="settings-block f2">
+      <div class="settings-block-label">API Authorization Key</div>
+      <p class="api-note">Required for neural analysis. Obtain at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key.</p>
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-api03-...">
+      <button class="btn-primary" onclick="saveApiKey()">AUTHORIZE KEY</button>
+      <div class="key-status" id="keyStatus"></div>
+    </div>
+
+    <div class="settings-block f3">
+      <div class="settings-block-label">Notifications</div>
+      <div class="notif-row">
+        <div><div class="notif-title">Daily sync reminder</div><div class="notif-sub">PUSH · EVERY DAY 09:00</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-title">Weekly diagnostics</div><div class="notif-sub">PUSH · EVERY SUNDAY</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-title">Streak protection</div><div class="notif-sub">ALERT · BEFORE STREAK LOSS</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-title">Protocol updates</div><div class="notif-sub">PUSH · WEEKLY INSIGHTS</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="settings-block-label">System Info</div>
+      <div style="display:grid;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px">VERSION</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white)">1.0.0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px">ENGINE</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--emerald)">CLAUDE AI · ACTIVE</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px">DATA STORAGE</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white)">LOCAL ONLY</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px">AUDIENCE</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white)">MALE · ALL AGES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ── DATA ── */
+const CATS=[
+  {key:'jawline',label:'JAWL'},
+  {key:'eyes',label:'EYES'},
+  {key:'skin',label:'SKIN'},
+  {key:'facial_fat',label:'FAT'},
+  {key:'sharpness',label:'SHRP'},
+  {key:'symmetry',label:'SYMM'},
+];
+
+const TASKS=[
+  {id:'t1',title:'Mewing Protocol',meta:'DURATION · 30 MIN',done:false},
+  {id:'t2',title:'Face Pulls (3×15)',meta:'SETS · 3 · REPS · 15',done:false},
+  {id:'t3',title:'Skincare Sequence',meta:'CLEANSER → MOISTURIZER → SPF',done:false},
+  {id:'t4',title:'Jaw Training',meta:'MASTIC GUM · 20 MIN',done:false},
+  {id:'t5',title:'Hydration Target',meta:'MINIMUM · 3.0L',done:false},
+  {id:'t6',title:'Sleep Protocol',meta:'LIGHTS OUT · 23:00',done:false},
+  {id:'t7',title:'Posture Alignment',meta:'CHECK · EVERY HOUR',done:false},
+];
+
+const DAYS=['M','T','W','T','F','S','S'];
+let analysisData=null;
+let streak=3;
+let xp=340;
+
+/* ── API KEY ── */
+function getApiKey(){return localStorage.getItem('apex_key')||'';}
+
+function saveApiKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  const s=document.getElementById('keyStatus');
+  if(!k.startsWith('sk-ant-')){
+    s.textContent='ERR · INVALID KEY FORMAT';
+    s.style.color='var(--red)';return;
   }
+  localStorage.setItem('apex_key',k);
+  s.textContent='OK · KEY AUTHORIZED';
+  s.style.color='var(--emerald)';
+}
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const apiKey = req.headers['x-api-key'];
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-      return res.status(401).json({ error: { message: 'Invalid or missing API key' } });
+/* ── TABS ── */
+function switchTab(t){
+  document.querySelectorAll('nav button').forEach((b,i)=>
+    b.classList.toggle('active',['analyze','plan','daily','settings'][i]===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='plan')renderPlan();
+  if(t==='daily')renderDaily();
+  if(t==='settings'){
+    const k=getApiKey();
+    if(k){
+      document.getElementById('apiKeyInput').value=k;
+      const s=document.getElementById('keyStatus');
+      s.textContent='OK · KEY AUTHORIZED';
+      s.style.color='var(--emerald)';
     }
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(req.body),
-    });
-
-    const data = await response.json();
-    return res.status(response.status).json(data);
-
-  } catch (err) {
-    return res.status(500).json({ error: { message: err.message } });
   }
 }
+
+/* ── FILE UPLOAD ── */
+function handleFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=document.getElementById('previewImg');
+    img.src=ev.target.result;
+    document.getElementById('preview-wrap').style.display='block';
+    document.getElementById('scannerLine').style.display='block';
+    document.getElementById('analyzeBtn').disabled=false;
+    window._imgData=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function resetAnalysis(){
+  analysisData=null;
+  document.getElementById('upload-state').style.display='block';
+  document.getElementById('results-state').style.display='none';
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('scannerLine').style.display='none';
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('fileInput').value='';
+}
+
+/* ── ANALYSIS ── */
+async function startAnalysis(){
+  const key=getApiKey();
+  if(!key){alert('Authorization required.\n\nAdd your API key in Config tab.');switchTab('settings');return;}
+
+  document.getElementById('upload-state').style.display='none';
+  document.getElementById('loading-state').style.display='block';
+
+  // Top progress bar
+  const prog=document.getElementById('topProgress');
+  const fill=document.getElementById('topFill');
+  prog.style.display='block';
+  const phases=[
+    {p:'PHASE 1 / 5 — INITIALIZATION',s:'Detecting facial landmarks...'},
+    {p:'PHASE 2 / 5 — EXTRACTION',s:'Mapping bone structure & angles...'},
+    {p:'PHASE 3 / 5 — DIAGNOSTICS',s:'Evaluating skin quality & texture...'},
+    {p:'PHASE 4 / 5 — VECTOR ANALYSIS',s:'Scoring symmetry & eye area...'},
+    {p:'PHASE 5 / 5 — SYNTHESIS',s:'Generating optimization protocol...'},
+  ];
+  let pi=0;
+  const pr=document.getElementById('loadProtocol');
+  const lt=document.getElementById('loadingText');
+  pr.textContent=phases[0].p;lt.textContent=phases[0].s;
+  fill.style.width='10%';
+  const iv=setInterval(()=>{
+    if(pi<phases.length-1){
+      pi++;pr.textContent=phases[pi].p;lt.textContent=phases[pi].s;
+      fill.style.width=(20+pi*20)+'%';
+    }
+  },900);
+
+  try{
+    const imgData=window._imgData;
+    const b64=imgData.split(',')[1];
+    const mime=imgData.split(';')[0].split(':')[1];
+
+    const res=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1400,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          {type:'text',text:`You are a clinical Looksmaxxing AI. Analyze this man's face scientifically. Return ONLY valid JSON — no markdown, no backticks, nothing else.
+
+{
+  "overall": <integer 1-10>,
+  "tier": "<Developing|Average|Above Average|High-Tier|Chad>",
+  "description": "<2 precise clinical sentences about current state and optimization potential>",
+  "system_rec": "<1-2 sentences: top-level recommendation for this subject's biggest leverage point>",
+  "scores": {
+    "jawline": <1-10>,
+    "eyes": <1-10>,
+    "skin": <1-10>,
+    "facial_fat": <1-10>,
+    "sharpness": <1-10>,
+    "symmetry": <1-10>
+  },
+  "plan": [
+    {"area":"<area name>","priority":"<High|Medium|Low>","icon":"<single emoji>","protocol_id":"PROT-0${1}","advice":"<2-3 sentence clinical actionable protocol>"},
+    {"area":"<area name>","priority":"<High|Medium|Low>","icon":"<single emoji>","protocol_id":"PROT-0${2}","advice":"<2-3 sentence clinical actionable protocol>"},
+    {"area":"<area name>","priority":"<High|Medium|Low>","icon":"<single emoji>","protocol_id":"PROT-0${3}","advice":"<2-3 sentence clinical actionable protocol>"},
+    {"area":"<area name>","priority":"<High|Medium|Low>","icon":"<single emoji>","protocol_id":"PROT-0${4}","advice":"<2-3 sentence clinical actionable protocol>"}
+  ],
+  "haircuts": [
+    {"name":"<name>","desc":"<clinical reason this suits face shape>"},
+    {"name":"<name>","desc":"<clinical reason this suits face shape>"},
+    {"name":"<name>","desc":"<clinical reason this suits face shape>"},
+    {"name":"<name>","desc":"<clinical reason this suits face shape>"}
+  ],
+  "advice": [
+    "<advanced looksmaxxing insight for this specific subject>",
+    "<advanced looksmaxxing insight for this specific subject>",
+    "<advanced looksmaxxing insight for this specific subject>"
+  ]
+}`}
+        ]}]
+      })
+    });
+
+    clearInterval(iv);
+    fill.style.width='100%';
+    setTimeout(()=>prog.style.display='none',600);
+
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const txt=data.content.map(i=>i.text||'').join('');
+    analysisData=JSON.parse(txt.replace(/```json|```/g,'').trim());
+
+    document.getElementById('loading-state').style.display='none';
+    document.getElementById('results-state').style.display='block';
+    renderResults();
+
+  }catch(err){
+    clearInterval(iv);
+    prog.style.display='none';
+    document.getElementById('loading-state').style.display='none';
+    document.getElementById('upload-state').style.display='block';
+    document.getElementById('analyzeBtn').disabled=false;
+    alert('Scan failed: '+err.message+'\n\nCheck API key in Config tab.');
+  }
+}
+
+/* ── RADAR CHART ── */
+function drawRadar(scores){
+  const canvas=document.getElementById('radarCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const cx=W/2,cy=H/2;
+  const R=78;
+  const keys=['jawline','eyes','skin','facial_fat','sharpness','symmetry'];
+  const labels=['JAWLINE','EYES','SKIN','FAT RATE','SHARPNESS','SYMMETRY'];
+  const n=keys.length;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid rings
+  for(let r=1;r<=5;r++){
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const a=(Math.PI*2*i/n)-Math.PI/2;
+      const x=cx+Math.cos(a)*(R*r/5);
+      const y=cy+Math.sin(a)*(R*r/5);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle=r===5?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.05)';
+    ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // Spokes
+  for(let i=0;i<n;i++){
+    const a=(Math.PI*2*i/n)-Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);
+    ctx.strokeStyle='rgba(255,255,255,0.07)';
+    ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a=(Math.PI*2*i/n)-Math.PI/2;
+    const v=(scores[keys[i]]||0)/10;
+    const x=cx+Math.cos(a)*R*v;
+    const y=cy+Math.sin(a)*R*v;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;ctx.stroke();
+
+  // Data points
+  for(let i=0;i<n;i++){
+    const a=(Math.PI*2*i/n)-Math.PI/2;
+    const v=(scores[keys[i]]||0)/10;
+    const x=cx+Math.cos(a)*R*v;
+    const y=cy+Math.sin(a)*R*v;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.fill();
+  }
+
+  // Labels
+  ctx.font='600 9px JetBrains Mono, monospace';
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){
+    const a=(Math.PI*2*i/n)-Math.PI/2;
+    const x=cx+Math.cos(a)*(R+18);
+    const y=cy+Math.sin(a)*(R+14);
+    ctx.fillText(labels[i],x,y);
+  }
+}
+
+/* ── RENDER RESULTS ── */
+function metFill(v){
+  if(v>=8)return'good';
+  if(v>=5)return'mid';
+  return'bad';
+}
+
+function statusChip(v){
+  if(v>=8)return`<div class="status-chip chip-optimal">● OPTIMAL</div>`;
+  if(v>=5)return`<div class="status-chip chip-required">▲ OPTIMIZE</div>`;
+  return`<div class="status-chip chip-critical">✕ CRITICAL</div>`;
+}
+
+function renderResults(){
+  const d=analysisData;
+  document.getElementById('bentoScore').innerHTML=d.overall+'<span class="bento-unit">/10</span>';
+  document.getElementById('bentoTier').textContent=d.tier;
+  document.getElementById('bentoDesc').textContent=d.description;
+  document.getElementById('systemRec').textContent=d.system_rec||d.description;
+
+  // Metrics list
+  document.getElementById('metricList').innerHTML=CATS.map(c=>{
+    const v=d.scores[c.key]||0;
+    const cl=metFill(v);
+    return`<div class="metric-row">
+      <div class="metric-name">${c.label}</div>
+      <div class="metric-track">
+        <div class="metric-fill ${cl}" style="width:${v*10}%"></div>
+      </div>
+      <div class="metric-score">${v}</div>
+    </div>`;
+  }).join('');
+
+  drawRadar(d.scores);
+}
+
+/* ── RENDER PLAN ── */
+function renderPlan(){
+  if(!analysisData){
+    document.getElementById('plan-locked').style.display='block';
+    document.getElementById('plan-content').style.display='none';
+    return;
+  }
+  document.getElementById('plan-locked').style.display='none';
+  document.getElementById('plan-content').style.display='block';
+  const d=analysisData;
+
+  document.getElementById('planItems').innerHTML=(d.plan||[]).map((p,i)=>{
+    const pc=p.priority==='High'?'chip-critical':p.priority==='Medium'?'chip-required':'chip-optimal';
+    return`<div class="plan-item">
+      <div class="plan-row">
+        <div class="plan-index">${String(i+1).padStart(2,'0')}</div>
+        <div class="plan-name">${p.icon} ${p.area}</div>
+        <div class="status-chip ${pc}" style="margin-bottom:0">${p.priority.toUpperCase()}</div>
+      </div>
+      <div class="plan-advice">${p.advice}</div>
+      ${p.protocol_id?`<div class="protocol-id" style="padding-left:44px;margin-top:8px">${p.protocol_id}</div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('haircutItems').innerHTML=(d.haircuts||[]).map((h,i)=>`
+    <div class="haircut-card">
+      <div class="haircut-id">CUT-${String(i+1).padStart(2,'0')}</div>
+      <div class="haircut-name">${h.name}</div>
+      <div class="haircut-desc">${h.desc}</div>
+    </div>`).join('');
+
+  document.getElementById('adviceItems').innerHTML=(d.advice||[]).map((a,i)=>`
+    <div class="advice-row">
+      <div class="advice-id">LOG-${String(i+1).padStart(2,'0')}</div>
+      <div class="advice-body">${a}</div>
+    </div>`).join('');
+}
+
+/* ── DAILY ── */
+function renderDaily(){
+  document.getElementById('streakVal').textContent=streak;
+  document.getElementById('xpCount').textContent=xp+' / 500 XP';
+  document.getElementById('xpLevel').textContent='LEVEL '+String(Math.floor(xp/500)+1).padStart(2,'0');
+  document.getElementById('xpFill').style.width=((xp%500)/500*100)+'%';
+
+  document.getElementById('weekDots').innerHTML=DAYS.map((d,i)=>`
+    <div style="width:30px;height:30px;border-radius:2px;border:1px solid ${i<streak?'rgba(255,255,255,0.3)':'var(--border)'};background:${i<streak?'rgba(255,255,255,0.06)':'transparent'};display:flex;align-items:center;justify-content:center;font-family:JetBrains Mono,monospace;font-size:10px;color:${i<streak?'var(--white)':'var(--muted)'}">${d}</div>`).join('');
+
+  document.getElementById('dailyList').innerHTML=TASKS.map(t=>`
+    <div class="daily-task" onclick="toggleTask('${t.id}')">
+      <div class="task-box ${t.done?'done':''}">${t.done?'✓':''}</div>
+      <div>
+        <div class="task-title ${t.done?'done':''}">${t.title}</div>
+        <div class="task-meta">${t.meta}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleTask(id){
+  const t=TASKS.find(t=>t.id===id);
+  if(!t)return;
+  t.done=!t.done;
+  if(t.done)xp=Math.min(xp+7,500);
+  else xp=Math.max(xp-7,0);
+  renderDaily();
+}
+
+function syncAll(){
+  const undone=TASKS.filter(t=>!t.done);
+  TASKS.forEach(t=>t.done=true);
+  xp=Math.min(xp+undone.length*7+50,500);
+  streak=Math.min(streak+1,7);
+  renderDaily();
+}
+
+renderDaily();
+</script>
+</body>
+</html>
